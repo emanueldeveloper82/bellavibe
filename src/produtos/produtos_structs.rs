@@ -34,3 +34,24 @@ pub struct ProdutoResponse {
     pub preco: BigDecimal,
     pub estoque: i32,
 }
+
+/// Estrutura para representar um item individual dentro de uma venda
+// Adicionado Serialize para poder retornar na resposta, se necessário
+#[derive(Deserialize, Serialize)] 
+pub struct ItemVenda {
+    pub produto_id: i32,
+    pub quantidade: i32,
+}
+
+/// Estrutura para a requisição de venda
+#[derive(Deserialize)]
+pub struct VendaRequest {
+    pub itens: Vec<ItemVenda>,
+}
+
+/// Estrutura para a resposta de sucesso da venda
+#[derive(Serialize)]
+pub struct VendaResponse {
+    pub total_compra: BigDecimal,
+    pub mensagem: String,
+}

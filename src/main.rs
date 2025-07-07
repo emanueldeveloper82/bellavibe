@@ -20,7 +20,8 @@ async fn main() -> std::io::Result<()> {
     // URL de conexão com o banco de dados PostgreSQL.
     // Certifique-se de que o tipo da coluna 'preco' no seu banco de dados PostgreSQL seja NUMERIC ou DECIMAL
     // para garantir a compatibilidade com bigdecimal::BigDecimal.
-    let database_url = "postgres://user:password@localhost:port/bellavibe";
+    // let database_url = "postgres://user:passsword@localhost:port/database";
+    let database_url = "postgres://emanuel:Emanuel12%23@localhost:5432/bellavibe";
 
     // Conecta ao banco de dados PostgreSQL usando um pool de conexões.
     // O .expect() fará com que o programa entre em pânico se a conexão falhar.
@@ -45,6 +46,7 @@ async fn main() -> std::io::Result<()> {
             // Note o caminho completo: `produtos::produtos_router::`
             .service(produtos::produtos_router::buscar_produtos)
             .service(produtos::produtos_router::cadastrar_produto)
+            .service(produtos::produtos_router::realizar_venda)
     })
     // Vincula o servidor ao endereço IP e porta. O '?' propaga erros.
     .bind("127.0.0.1:8080")?
