@@ -2,6 +2,8 @@
 
 use actix_web::{web, App, HttpServer};
 use sqlx::{Pool, Postgres};
+use std::sync::RwLock;
+
 
 // Importa o módulo 'produtos' que contém as rotas e structs relacionadas a produtos.
 // O Rust encontrará o arquivo `src/produtos/mod.rs` e, a partir dele, os submódulos.
@@ -32,6 +34,10 @@ async fn main() -> std::io::Result<()> {
     // web::Data é usado para compartilhar dados imutáveis entre as rotas.
     let app_state = web::Data::new(AppState { db_pool });
 
+    // Cria e compartilha o estado do carrinho de compras em memória.
+    // RwLock permite múltiplos leitores ou um único escritor.
+    let carrinho_state = web::Data::new(RwLock::new(produtos::produtos_structs::Carrinho::default()));
+
     println!("Iniciando API BellaVibe na porta 8080...");
 
     // Configura e inicia o servidor HTTP.
@@ -40,13 +46,15 @@ async fn main() -> std::io::Result<()> {
             // Adiciona o estado compartilhado à aplicação.
             // .clone() é necessário porque a closure é movida
             // e pode ser executada várias vezes.
-            .app_data(app_state.clone())
-
+            .app_data(app_state.clone())            
+            .app_data(carrinho_state.clone())
             // Registra as rotas importadas do submódulo `produtos_router`.
             // Note o caminho completo: `produtos::produtos_router::`
             .service(produtos::produtos_router::buscar_produtos)
             .service(produtos::produtos_router::cadastrar_produto)
             .service(produtos::produtos_router::realizar_venda)
+            .service(produtos::produtos_router::adicionar_item_sacola) 
+            .service(produtos::produtos_router::ver_sacola)
     })
     // Vincula o servidor ao endereço IP e porta. O '?' propaga erros.
     .bind("127.0.0.1:8080")?
