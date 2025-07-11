@@ -2,18 +2,13 @@
 
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use bigdecimal::BigDecimal; // Importe BigDecimal
+use bigdecimal::BigDecimal; 
 
 
-/// Estrutura genérica para padronizar as respostas da API
-/// 'T' é o tipo do corpo da resposta, que pode ser opcional.
-#[derive(Serialize)]
-pub struct GenericResponse<T> {
-    pub status: String,
-    pub message: String,
-    #[serde(skip_serializing_if = "Option::is_none")] // Não serializa 'body' se for None
-    pub body: Option<T>,
-}
+// Importa ItemVenda do módulo de vendas, pois Carrinho ainda depende dela aqui
+// O 'crate::' garante que estamos importando do módulo 'vendas' no nível raiz do crate.
+use crate::vendas::vendas_structs::ItemVenda;
+
 
 /// Estrutura para receber dados do novo produto na requisição POST
 #[derive(Deserialize)]
@@ -44,21 +39,6 @@ pub struct ProdutoResponse {
     pub descricao: String,
     pub preco: BigDecimal,
     pub estoque: i32,
-}
-
-/// Estrutura para representar um item individual dentro de uma venda
-// Adicionado Serialize para poder retornar na resposta, se necessário
-#[derive(Deserialize, Serialize, Clone)] 
-pub struct ItemVenda {
-    pub produto_id: i32,
-    pub quantidade: i32,
-}
-
-/// Estrutura para a resposta de sucesso da venda
-#[derive(Serialize)]
-pub struct VendaResponse {
-    pub total_compra: BigDecimal,
-    pub mensagem: String,
 }
 
 /// Estrutura para representar a sacola de compras em memória (para este MVP)

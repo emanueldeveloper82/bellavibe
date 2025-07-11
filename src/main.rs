@@ -8,6 +8,7 @@ use std::sync::RwLock;
 // Importa o módulo 'produtos' que contém as rotas e structs relacionadas a produtos.
 // O Rust encontrará o arquivo `src/produtos/mod.rs` e, a partir dele, os submódulos.
 mod produtos;
+mod vendas;
 
 // Estado compartilhado que contém a conexão com o banco de dados.
 // Esta struct permanece aqui, pois o pool de conexão é global para a aplicação
@@ -48,13 +49,16 @@ async fn main() -> std::io::Result<()> {
             // e pode ser executada várias vezes.
             .app_data(app_state.clone())            
             .app_data(carrinho_state.clone())
-            // Registra as rotas importadas do submódulo `produtos_router`.
-            // Note o caminho completo: `produtos::produtos_router::`
+
+
+            // Módulo de Produtos            
             .service(produtos::produtos_router::buscar_produtos)
-            .service(produtos::produtos_router::cadastrar_produto)
-            .service(produtos::produtos_router::realizar_venda)
+            .service(produtos::produtos_router::cadastrar_produto)            
             .service(produtos::produtos_router::adicionar_item_sacola) 
             .service(produtos::produtos_router::ver_sacola)
+                        
+            //Módulo de Vendas            
+            .service(vendas::vendas_router::realizar_venda)
     })
     // Vincula o servidor ao endereço IP e porta. O '?' propaga erros.
     .bind("127.0.0.1:8080")?
