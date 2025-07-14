@@ -61,9 +61,16 @@ async fn main() -> std::io::Result<()> {
             //Módulo de Vendas            
             .service(vendas::vendas_router::realizar_venda)
 
-            // Módulo de Categorias (Novas Rotas)
+            // Módulo de Categorias (Rotas de Sessões)
+            .service(categorias::categoria_router::cadastrar_sessao)
+            .service(categorias::categoria_router::buscar_sessoes)
+            .service(categorias::categoria_router::buscar_sessao_por_id)
+            .service(categorias::categoria_router::atualizar_sessao)    
+            .service(categorias::categoria_router::deletar_sessao)      
+
+            // Módulo de Categorias (Rotas de Categorias Filhas/Genéricas)
             .service(categorias::categoria_router::cadastrar_categoria)
-            .service(categorias::categoria_router::buscar_categorias)
+            .service(categorias::categoria_router::buscar_categorias_por_sessao)
             .service(categorias::categoria_router::buscar_categoria_por_id)
             .service(categorias::categoria_router::atualizar_categoria)
             .service(categorias::categoria_router::deletar_categoria)
