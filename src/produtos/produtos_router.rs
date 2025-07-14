@@ -1,10 +1,8 @@
 // src/produtos/produtos_router.rs
 
 use actix_web::{get, post, web, HttpResponse, Responder};
-//use sqlx::{query_as, Row, Pool, Postgres}; // Pool e Postgres ainda são necessários para verificar produtos
-use sqlx::{query_as, Row}; 
+use sqlx::{query_as, Row};
 use serde_json;
-//use bigdecimal::BigDecimal;
 use std::sync::RwLock;
 
 // Importa as structs específicas de produtos
@@ -12,12 +10,12 @@ use super::produtos_structs::{
     NovoProduto,
     Produto,
     ProdutoResponse,
-    Carrinho    
+    Carrinho,
+    ProdutoRawData    
 };
 
-// Importa ItemVenda e GenericResponse do novo módulo de vendas
-// Usamos 'crate::' para importar diretamente do módulo 'vendas' no nível raiz do crate.
-use crate::vendas::vendas_structs::{ItemVenda, GenericResponse}; // <-- Importação de ItemVenda corrigida aqui
+// Importa ItemVenda e GenericResponse do módulo de vendas
+use crate::vendas::vendas_structs::{ItemVenda, GenericResponse};
 
 // Importa o AppState do módulo raiz (main.rs)
 use crate::AppState;
@@ -26,19 +24,33 @@ use crate::AppState;
 /// Retorna uma GenericResponse com a lista de produtos.
 #[get("/produtos")]
 pub async fn buscar_produtos(data: web::Data<AppState>) -> impl Responder {
-    let produtos_result = query_as::<_, Produto>("SELECT id, nome, descricao, preco, estoque FROM produtos")
-        .fetch_all(&data.db_pool)
-        .await;
+    
+    // Retorna uma tupla de Produto e String (nome da categoria)
+    let produtos_result = query_as::<_, ProdutoRawData>(
+        r#"
+        SELECT 
+            p.id, p.nome, p.descricao, p.preco, p.estoque, p.categoria_id,
+            c.nome AS categoria_nome
+        FROM produtos p
+        JOIN categorias c ON p.categoria_id = c.id
+        ORDER BY p.id
+        "#
+    )
+    .fetch_all(&data.db_pool)
+    .await;
 
     match produtos_result {
-        Ok(produtos) => {
-            let response_body: Vec<ProdutoResponse> = produtos.into_iter()
-                .map(|p| ProdutoResponse {
-                    id: p.id,
-                    nome: p.nome,
-                    descricao: p.descricao,
-                    preco: p.preco,
-                    estoque: p.estoque,
+        Ok(produtos_raw) => {
+            let response_body: Vec<ProdutoResponse> = produtos_raw.into_iter()
+                // Mapeia ProdutoRawData para ProdutoResponse
+                .map(|p_raw| ProdutoResponse { 
+                    id: p_raw.id,
+                    nome: p_raw.nome,
+                    descricao: p_raw.descricao,
+                    preco: p_raw.preco,
+                    estoque: p_raw.estoque,
+                    categoria_id: p_raw.categoria_id,
+                    categoria_nome: p_raw.categoria_nome,
                 })
                 .collect();
             
@@ -67,12 +79,13 @@ pub async fn cadastrar_produto(
     item: web::Json<NovoProduto>,
 ) -> HttpResponse {
     let result = sqlx::query(
-        "INSERT INTO produtos (nome, descricao, preco, estoque) VALUES ($1, $2, $3, $4) RETURNING id"
+        "INSERT INTO produtos (nome, descricao, preco, estoque, categoria_id) VALUES ($1, $2, $3, $4, $5) RETURNING id"
     )
     .bind(&item.nome)
     .bind(&item.descricao)
     .bind(&item.preco)
-    .bind(item.estoque)
+    .bind(item.estoque)    
+    .bind(item.categoria_id)
     .fetch_one(&data.db_pool)
     .await;
 
@@ -119,7 +132,7 @@ pub async fn adicionar_item_sacola(
 ) -> HttpResponse {
     // Verifica se o produto existe no banco de dados
     let produto_exists = sqlx::query_as::<_, Produto>(
-        "SELECT id, nome, descricao, preco, estoque FROM produtos WHERE id = $1"
+        "SELECT id, nome, descricao, preco, estoque, categoria_id FROM produtos WHERE id = $1" 
     )
     .bind(item_venda.produto_id)
     .fetch_optional(&data.db_pool)

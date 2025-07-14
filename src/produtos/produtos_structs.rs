@@ -16,7 +16,8 @@ pub struct NovoProduto {
     pub nome: String,
     pub descricao: String,
     pub preco: BigDecimal,
-    pub estoque: i32,
+    pub estoque: i32,    
+    pub categoria_id: i32,
 }
 
 /// Estrutura que representa um produto no banco de dados
@@ -28,6 +29,7 @@ pub struct Produto {
     pub descricao: String,
     pub preco: BigDecimal,
     pub estoque: i32,
+    pub categoria_id: i32,
 }
 
 /// Estrutura para a resposta da API ao buscar produtos
@@ -39,6 +41,23 @@ pub struct ProdutoResponse {
     pub descricao: String,
     pub preco: BigDecimal,
     pub estoque: i32,
+    //
+    pub categoria_id: i32,     
+    pub categoria_nome: String, 
+}
+
+
+/// Estrutura auxiliar para mapear diretamente o resultado da query SQL com JOIN.
+/// Contém todos os campos selecionados, incluindo o nome da categoria.
+#[derive(FromRow)]
+pub struct ProdutoRawData {
+    pub id: i32,
+    pub nome: String,
+    pub descricao: String,
+    pub preco: BigDecimal,
+    pub estoque: i32,
+    pub categoria_id: i32,
+    pub categoria_nome: String,
 }
 
 /// Estrutura para representar a sacola de compras em memória (para este MVP)
