@@ -9,6 +9,7 @@ use std::sync::RwLock;
 // O Rust encontrará o arquivo `src/produtos/mod.rs` e, a partir dele, os submódulos.
 mod produtos;
 mod vendas;
+mod categorias;
 
 // Estado compartilhado que contém a conexão com o banco de dados.
 // Esta struct permanece aqui, pois o pool de conexão é global para a aplicação
@@ -59,6 +60,13 @@ async fn main() -> std::io::Result<()> {
                         
             //Módulo de Vendas            
             .service(vendas::vendas_router::realizar_venda)
+
+            // Módulo de Categorias (Novas Rotas)
+            .service(categorias::categoria_router::cadastrar_categoria)
+            .service(categorias::categoria_router::buscar_categorias)
+            .service(categorias::categoria_router::buscar_categoria_por_id)
+            .service(categorias::categoria_router::atualizar_categoria)
+            .service(categorias::categoria_router::deletar_categoria)
     })
     // Vincula o servidor ao endereço IP e porta. O '?' propaga erros.
     .bind("127.0.0.1:8080")?
