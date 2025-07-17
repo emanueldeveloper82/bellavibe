@@ -5,8 +5,8 @@ use sqlx::{query_as, query, Row};
 
 // Importa as structs de categoria
 use super::categoria_structs::{Categoria, NovaCategoria};
-
-use crate::vendas::vendas_structs::GenericResponse;
+// Importa GenericResponse do novo módulo shared_structs
+use crate::shared::shared_structs::GenericResponse;
 
 // Importa o AppState do módulo raiz (main.rs)
 use crate::AppState;

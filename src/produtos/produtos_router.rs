@@ -15,7 +15,9 @@ use super::produtos_structs::{
 };
 
 // Importa ItemVenda e GenericResponse do módulo de vendas
-use crate::vendas::vendas_structs::{ItemVenda, GenericResponse};
+use crate::vendas::vendas_structs::{ItemVenda};
+// Importa GenericResponse do novo módulo shared_structs
+use crate::shared::shared_structs::GenericResponse;
 
 // Importa o AppState do módulo raiz (main.rs)
 use crate::AppState;

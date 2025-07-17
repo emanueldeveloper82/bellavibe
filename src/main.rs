@@ -10,6 +10,7 @@ use std::sync::RwLock;
 mod produtos;
 mod vendas;
 mod categorias;
+mod shared;
 
 // Estado compartilhado que contém a conexão com o banco de dados.
 // Esta struct permanece aqui, pois o pool de conexão é global para a aplicação

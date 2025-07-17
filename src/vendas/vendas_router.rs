@@ -7,12 +7,14 @@ use std::sync::RwLock;
 
 // Importa as structs necessárias do módulo de produtos (para Produto)
 use crate::produtos::produtos_structs::Produto;
-// Importa as structs de vendas (ItemVenda, VendaResponse, GenericResponse)
-use super::vendas_structs::{VendaResponse, GenericResponse};
+// Importa as structs de vendas (ItemVenda, VendaResponse)
+use super::vendas_structs::{VendaResponse};
 // Importa o AppState do módulo raiz (main.rs)
 use crate::AppState;
 // Importa o Carrinho do módulo de produtos (ainda está lá)
 use crate::produtos::produtos_structs::Carrinho;
+// Importa GenericResponse do novo módulo shared_structs
+use crate::shared::shared_structs::GenericResponse;
 
 
 /// Rota para realizar uma venda de produtos, consumindo itens da sacola.
