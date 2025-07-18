@@ -53,10 +53,14 @@ async fn main() -> std::io::Result<()> {
             .app_data(carrinho_state.clone())
 
 
-            // Módulo de Produtos            
+            // Módulo de Produtos
             .service(produtos::produtos_router::buscar_produtos)
-            .service(produtos::produtos_router::cadastrar_produto)            
-            .service(produtos::produtos_router::adicionar_item_sacola) 
+            .service(produtos::produtos_router::buscar_produto_por_id) 
+            .service(produtos::produtos_router::cadastrar_produto)
+            .service(produtos::produtos_router::atualizar_produto)
+            .service(produtos::produtos_router::deletar_produto)
+            
+            .service(produtos::produtos_router::adicionar_item_sacola)
             .service(produtos::produtos_router::ver_sacola)
                         
             //Módulo de Vendas            
