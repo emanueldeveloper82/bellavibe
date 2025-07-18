@@ -2,13 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use bigdecimal::BigDecimal; 
-
-
-// Importa ItemVenda do módulo de vendas, pois Carrinho ainda depende dela aqui
-// O 'crate::' garante que estamos importando do módulo 'vendas' no nível raiz do crate.
-use crate::vendas::vendas_structs::ItemVenda;
-
+use bigdecimal::BigDecimal; // Importa BigDecimal
 
 /// Estrutura para receber dados do novo produto na requisição POST
 #[derive(Deserialize)]
@@ -16,7 +10,7 @@ pub struct NovoProduto {
     pub nome: String,
     pub descricao: String,
     pub preco: BigDecimal,
-    pub estoque: i32,    
+    pub estoque: i32,
     pub categoria_id: i32,
 }
 
@@ -29,7 +23,7 @@ pub struct Produto {
     pub descricao: String,
     pub preco: BigDecimal,
     pub estoque: i32,
-    pub categoria_id: i32,
+    pub categoria_id: i32, 
 }
 
 /// Estrutura para a resposta da API ao buscar produtos
@@ -41,9 +35,8 @@ pub struct ProdutoResponse {
     pub descricao: String,
     pub preco: BigDecimal,
     pub estoque: i32,
-    //
     pub categoria_id: i32,     
-    pub categoria_nome: String, 
+    pub categoria_nome: String,
 }
 
 
@@ -57,11 +50,5 @@ pub struct ProdutoRawData {
     pub preco: BigDecimal,
     pub estoque: i32,
     pub categoria_id: i32,
-    pub categoria_nome: String,
-}
-
-/// Estrutura para representar a sacola de compras em memória (para este MVP)
-#[derive(Default)] // Permite criar uma instância padrão (com vetor vazio)
-pub struct Carrinho {
-    pub itens: Vec<ItemVenda>,
+    pub categoria_nome: String, // Corresponde a 'c.nome AS categoria_nome' na query
 }

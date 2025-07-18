@@ -1,20 +1,17 @@
 // src/vendas/vendas_router.rs
 
-use actix_web::{post, web, HttpResponse};
-//use sqlx::{query_as, Row, Pool, Postgres, Transaction};
+use actix_web::{get, post, web, HttpResponse};
 use bigdecimal::BigDecimal;
 use std::sync::RwLock;
 
-// Importa as structs necessárias do módulo de produtos (para Produto)
-use crate::produtos::produtos_structs::Produto;
-// Importa as structs de vendas (ItemVenda, VendaResponse)
-use super::vendas_structs::{VendaResponse};
 // Importa o AppState do módulo raiz (main.rs)
 use crate::AppState;
-// Importa o Carrinho do módulo de produtos (ainda está lá)
-use crate::produtos::produtos_structs::Carrinho;
+// Importa as structs necessárias do módulo de produtos (para Produto)
+use crate::produtos::produtos_structs::Produto;
 // Importa GenericResponse do novo módulo shared_structs
 use crate::shared::shared_structs::GenericResponse;
+// Importa as structs de vendas (ItemVenda, VendaResponse, Carrinho)
+use super::vendas_structs::{ItemVenda, VendaResponse, Carrinho}; 
 
 
 /// Rota para realizar uma venda de produtos, consumindo itens da sacola.
@@ -156,3 +153,79 @@ pub async fn realizar_venda(
         }),
     })
 }
+
+
+
+// --- Rotas para a funcionalidade de Sacola (Movidas para o módulo de Vendas) ---
+
+/// Rota para adicionar um item à sacola de compras.
+/// Recebe um ItemVenda no corpo da requisição.
+#[post("/sacola/adicionar")]
+pub async fn adicionar_item_sacola(
+    carrinho_data: web::Data<RwLock<Carrinho>>, // Acesso ao estado da sacola
+    item_venda: web::Json<ItemVenda>,
+    data: web::Data<AppState>, // Necessário para verificar o produto no DB
+) -> HttpResponse {
+    // Verifica se o produto existe no banco de dados
+    let produto_exists = sqlx::query_as::<_, Produto>(
+        "SELECT id, nome, descricao, preco, estoque, categoria_id FROM produtos WHERE id = $1" 
+    )
+    .bind(item_venda.produto_id)
+    .fetch_optional(&data.db_pool)
+    .await;
+
+    match produto_exists {
+        Ok(Some(_)) => {
+            let mut carrinho = carrinho_data.write().unwrap(); // Obtém um lock de escrita
+
+            // Verifica se o produto já existe na sacola
+            let mut found = false;
+            for item_in_cart in carrinho.itens.iter_mut() {
+                if item_in_cart.produto_id == item_venda.produto_id {
+                    item_in_cart.quantidade += item_venda.quantidade; // Soma a quantidade
+                    found = true;
+                    break;
+                }
+            }
+
+            if !found {
+                // Se o produto não foi encontrado, adiciona como um novo item
+                carrinho.itens.push(item_venda.into_inner());
+            }
+
+            HttpResponse::Ok().json(GenericResponse::<()>{
+                status: "success".to_string(),
+                message: "Item adicionado/atualizado na sacola com sucesso!".to_string(),
+                body: None,
+            })
+        },
+        Ok(None) => {
+            HttpResponse::BadRequest().json(GenericResponse::<()>{
+                status: "error".to_string(),
+                message: format!("Produto com ID {} não encontrado para adicionar à sacola.", item_venda.produto_id),
+                body: None,
+            })
+        },
+        Err(e) => {
+            eprintln!("Erro ao verificar produto para adicionar à sacola: {:?}", e);
+            HttpResponse::InternalServerError().json(GenericResponse::<()>{
+                status: "error".to_string(),
+                message: "Erro interno ao verificar produto".to_string(),
+                body: None,
+            })
+        }
+    }
+}
+
+/// Rota para visualizar o conteúdo atual da sacola de compras.
+#[get("/sacola")]
+pub async fn ver_sacola(carrinho_data: web::Data<RwLock<Carrinho>>) -> HttpResponse {
+    let carrinho = carrinho_data.read().unwrap(); // Obtém um lock de leitura
+    
+    HttpResponse::Ok().json(GenericResponse {
+        status: "success".to_string(),
+        message: "Conteúdo da sacola".to_string(),
+        body: Some(carrinho.itens.clone()), // Clona os itens para a resposta
+    })
+}
+

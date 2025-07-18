@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
 
     // Cria e compartilha o estado do carrinho de compras em memória.
     // RwLock permite múltiplos leitores ou um único escritor.
-    let carrinho_state = web::Data::new(RwLock::new(produtos::produtos_structs::Carrinho::default()));
+    let carrinho_state = web::Data::new(RwLock::new(vendas::vendas_structs::Carrinho::default()));
 
     println!("Iniciando API BellaVibe na porta 8080...");
 
@@ -55,16 +55,15 @@ async fn main() -> std::io::Result<()> {
 
             // Módulo de Produtos
             .service(produtos::produtos_router::buscar_produtos)
-            .service(produtos::produtos_router::buscar_produto_por_id) 
+            .service(produtos::produtos_router::buscar_produto_por_id)
             .service(produtos::produtos_router::cadastrar_produto)
             .service(produtos::produtos_router::atualizar_produto)
             .service(produtos::produtos_router::deletar_produto)
-            
-            .service(produtos::produtos_router::adicionar_item_sacola)
-            .service(produtos::produtos_router::ver_sacola)
                         
             //Módulo de Vendas            
             .service(vendas::vendas_router::realizar_venda)
+            .service(vendas::vendas_router::adicionar_item_sacola)
+            .service(vendas::vendas_router::ver_sacola)
 
             // Módulo de Categorias (Rotas de Sessões)
             .service(categorias::categoria_router::cadastrar_sessao)

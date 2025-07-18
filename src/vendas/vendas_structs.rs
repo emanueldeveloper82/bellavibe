@@ -19,3 +19,8 @@ pub struct VendaResponse {
     pub mensagem: String,
 }
 
+/// Estrutura para representar a sacola de compras em memória.
+#[derive(Default)] // Permite criar uma instância padrão (com vetor vazio)
+pub struct Carrinho {
+    pub itens: Vec<ItemVenda>,
+}

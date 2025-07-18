@@ -3,19 +3,14 @@
 use actix_web::{get, post, put, delete, web, HttpResponse, Responder};
 use sqlx::{query_as, query, Row}; // Importa 'query' também para UPDATE/DELETE
 use serde_json;
-use std::sync::RwLock;
 
 // Importa as structs específicas de produtos
 use super::produtos_structs::{
-    NovoProduto,
-    Produto,
-    ProdutoResponse,
-    Carrinho,
+    NovoProduto,    
+    ProdutoResponse,    
     ProdutoRawData,
 };
 
-// Importa ItemVenda do módulo de vendas
-use crate::vendas::vendas_structs::ItemVenda;
 // Importa GenericResponse do novo módulo shared_structs
 use crate::shared::shared_structs::GenericResponse;
 
@@ -283,76 +278,4 @@ pub async fn deletar_produto(
     }
 }
 
-// --- Rotas para a funcionalidade de Sacola ---
 
-/// Rota para adicionar um item à sacola de compras.
-/// Recebe um ItemVenda no corpo da requisição.
-#[post("/sacola/adicionar")]
-pub async fn adicionar_item_sacola(
-    carrinho_data: web::Data<RwLock<Carrinho>>, // Acesso ao estado da sacola
-    item_venda: web::Json<ItemVenda>,
-    data: web::Data<AppState>, // Necessário para verificar o produto no DB
-) -> HttpResponse {
-    // Verifica se o produto existe no banco de dados
-    // Inclui categoria_id na seleção (nome do campo ajustado)
-    let produto_exists = sqlx::query_as::<_, Produto>(
-        "SELECT id, nome, descricao, preco, estoque, categoria_id FROM produtos WHERE id = $1" 
-    )
-    .bind(item_venda.produto_id)
-    .fetch_optional(&data.db_pool)
-    .await;
-
-    match produto_exists {
-        Ok(Some(_)) => {
-            let mut carrinho = carrinho_data.write().unwrap(); // Obtém um lock de escrita
-
-            // Verifica se o produto já existe na sacola
-            let mut found = false;
-            for item_in_cart in carrinho.itens.iter_mut() {
-                if item_in_cart.produto_id == item_venda.produto_id {
-                    item_in_cart.quantidade += item_venda.quantidade; // Soma a quantidade
-                    found = true;
-                    break;
-                }
-            }
-
-            if !found {
-                // Se o produto não foi encontrado, adiciona como um novo item
-                carrinho.itens.push(item_venda.into_inner());
-            }
-
-            HttpResponse::Ok().json(GenericResponse::<()>{
-                status: "success".to_string(),
-                message: "Item adicionado/atualizado na sacola com sucesso!".to_string(),
-                body: None,
-            })
-        },
-        Ok(None) => {
-            HttpResponse::BadRequest().json(GenericResponse::<()>{
-                status: "error".to_string(),
-                message: format!("Produto com ID {} não encontrado para adicionar à sacola.", item_venda.produto_id),
-                body: None,
-            })
-        },
-        Err(e) => {
-            eprintln!("Erro ao verificar produto para adicionar à sacola: {:?}", e);
-            HttpResponse::InternalServerError().json(GenericResponse::<()>{
-                status: "error".to_string(),
-                message: "Erro interno ao verificar produto".to_string(),
-                body: None,
-            })
-        }
-    }
-}
-
-/// Rota para visualizar o conteúdo atual da sacola de compras.
-#[get("/sacola")]
-pub async fn ver_sacola(carrinho_data: web::Data<RwLock<Carrinho>>) -> HttpResponse {
-    let carrinho = carrinho_data.read().unwrap(); // Obtém um lock de leitura
-    
-    HttpResponse::Ok().json(GenericResponse {
-        status: "success".to_string(),
-        message: "Conteúdo da sacola".to_string(),
-        body: Some(carrinho.itens.clone()), // Clona os itens para a resposta
-    })
-}
