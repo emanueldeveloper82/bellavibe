@@ -17,12 +17,28 @@ use crate::shared::shared_structs::GenericResponse;
 // Importa o AppState do módulo raiz (main.rs)
 use crate::AppState;
 
+// Importa o extrator de autenticação
+use crate::usuarios::auth_middleware::AuthenticatedUser; 
+
+
 /// Rota para buscar todos os produtos no banco de dados.
 /// Retorna uma GenericResponse com a lista de produtos, incluindo o nome da categoria.
 #[get("/produtos")]
-pub async fn buscar_produtos(data: web::Data<AppState>) -> impl Responder {
-    // A consulta agora faz um JOIN com a tabela 'categorias' para obter o nome da categoria.
-    // Usamos ProdutoRawData para mapear o resultado completo do JOIN.
+pub async fn buscar_produtos(
+    data: web::Data<AppState>, 
+    auth_user: AuthenticatedUser,
+) -> impl Responder {
+    
+
+    //Gamb pra remover o dead_code ao subir a aplicação. Vou pensar em algo e remover esse if-else.
+    if auth_user.user_id > 0 && !auth_user.user_name.is_empty() && !auth_user.user_email.is_empty() {
+        println!("Usuário autenticado: buscar_produtos()"); 
+    } else {
+        // Opcional: logar um aviso se os dados do usuário estiverem incompletos,
+        // embora a validação do JWT já garanta a presença de sub, name e email.
+        eprintln!("Aviso: Dados do usuário autenticado incompletos ou inválidos.");
+    }
+    
     let produtos_result = query_as::<_, ProdutoRawData>(
         r#"
         SELECT 
@@ -138,7 +154,7 @@ pub async fn cadastrar_produto(
     .bind(&item.descricao)
     .bind(&item.preco)
     .bind(item.estoque)
-    .bind(item.categoria_id) // <-- Binda o ID da categoria (nome do campo ajustado)
+    .bind(item.categoria_id) 
     .fetch_one(&data.db_pool)
     .await;
 

@@ -2,11 +2,13 @@
 
 use actix_web::{post, web, HttpResponse};
 use sqlx::{query, query_as, Row};
-use bcrypt::{hash, verify, DEFAULT_COST}; // Para hashing de senhas
 use serde_json;
+use bcrypt::{hash, verify, DEFAULT_COST}; // Para hashing de senhas
+use jsonwebtoken::{encode, Header, EncodingKey}; // Para JWT
+use chrono::{Utc, Duration}; // Para gerenciar tempo (expiração do token)
 
 // Importa as structs do módulo de usuários
-use super::usuario_structs::{NovoUsuario, LoginRequest, AuthResponse, Usuario};
+use super::usuario_structs::{NovoUsuario, LoginRequest, AuthResponse, Usuario, Claims};
 // Importa GenericResponse do módulo shared_structs
 use crate::shared::shared_structs::GenericResponse;
 // Importa o AppState do módulo raiz (main.rs)
@@ -147,9 +149,26 @@ pub async fn login_usuario(
         });
     }
 
-    // 3. Gerar token de autenticação (PLACEHOLDER por enquanto)
-    // Em uma aplicação real, você geraria um JWT aqui.
-    let auth_token = format!("mock_token_for_user_{}", user.id);
+    // 3. Gerar token JWT real
+    let expiration = Utc::now() + Duration::hours(24); // Token válido por 24 horas
+    let claims = Claims {
+        sub: user.id,
+        name: user.nome.clone(),
+        email: user.email.clone(),
+        exp: expiration.timestamp(),
+    };
+
+    let token = match encode(&Header::default(), &claims, &EncodingKey::from_secret(data.jwt_secret.as_ref())) {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("Erro ao gerar JWT: {:?}", e);
+            return HttpResponse::InternalServerError().json(GenericResponse::<()>{
+                status: "error".to_string(),
+                message: "Erro interno ao gerar token de autenticação.".to_string(),
+                body: None,
+            });
+        }
+    };
 
     // 4. Retornar resposta de sucesso
     HttpResponse::Ok().json(AuthResponse {
@@ -158,6 +177,6 @@ pub async fn login_usuario(
         user_id: user.id,
         user_name: user.nome,
         user_email: user.email,
-        token: auth_token,
+        token, // Retorna o token JWT gerado
     })
 }

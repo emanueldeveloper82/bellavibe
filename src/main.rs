@@ -15,11 +15,10 @@ mod categorias; // Módulo de categorias
 mod shared;     // Módulo shared
 mod usuarios;   // Módulo de usuários
 
-// Estado compartilhado que contém a conexão com o banco de dados.
-// Esta struct permanece aqui, pois o pool de conexão é global para a aplicação
-// e é acessado por diferentes módulos.
+// Estado compartilhado que contém a conexão com o banco de dados e a chave secreta JWT.
 pub struct AppState {
     pub db_pool: Pool<Postgres>,
+    pub jwt_secret: String, //Chave secreta para JWT
 }
 
 // Função principal da aplicação Actix Web.
@@ -36,9 +35,13 @@ async fn main() -> std::io::Result<()> {
     let db_pool = Pool::<Postgres>::connect(&database_url).await
         .expect("Falha ao conectar ao banco PostgreSQL");
 
+    // Define a chave secreta JWT (em produção, viria de variáveis de ambiente)
+    //let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "(5ax<hF#<fT_pG>2poL1>XuL)345[sxY".into()); 
+    let jwt_secret = "minha_chave_secreta_para_testes_123".to_string();
+
     // Cria um estado compartilhado da aplicação com o pool de conexões.
     // web::Data é usado para compartilhar dados imutáveis entre as rotas.
-    let app_state = web::Data::new(AppState { db_pool });
+    let app_state = web::Data::new(AppState { db_pool, jwt_secret });
 
     // Cria e compartilha o estado do carrinho de compras em memória.
     // RwLock permite múltiplos leitores ou um único escritor.
@@ -81,7 +84,7 @@ async fn main() -> std::io::Result<()> {
             .service(categorias::categoria_router::buscar_categoria_por_id)
             .service(categorias::categoria_router::atualizar_categoria)
             .service(categorias::categoria_router::deletar_categoria)
-            
+
             // Módulo de Usuários (Novas Rotas)
             .service(usuarios::usuario_router::cadastrar_usuario)
             .service(usuarios::usuario_router::login_usuario)

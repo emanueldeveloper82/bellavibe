@@ -28,8 +28,18 @@ pub struct LoginRequest {
     pub senha: String, // Senha em texto claro
 }
 
+/// Estrutura para o payload do JWT (Claims).
+/// Contém informações sobre o usuário e a expiração do token.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: i32, // Subject (ID do usuário)
+    pub name: String, // Nome do usuário
+    pub email: String, // Email do usuário
+    pub exp: i64, // Expiration Time (timestamp Unix)
+}
+
 /// Estrutura para a resposta de sucesso do login.
-/// Por enquanto, um placeholder para o token.
+/// Agora inclui o token JWT real.
 #[derive(Serialize)]
 pub struct AuthResponse {
     pub status: String,
@@ -37,5 +47,5 @@ pub struct AuthResponse {
     pub user_id: i32,
     pub user_name: String,
     pub user_email: String,
-    pub token: String, // Token de autenticação (JWT ou similar)
+    pub token: String, 
 }
