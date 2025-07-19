@@ -5,12 +5,15 @@ use sqlx::{Pool, Postgres};
 use std::sync::RwLock;
 
 
+// Importa os módulos
+//
 // Importa o módulo 'produtos' que contém as rotas e structs relacionadas a produtos.
 // O Rust encontrará o arquivo `src/produtos/mod.rs` e, a partir dele, os submódulos.
-mod produtos;
-mod vendas;
-mod categorias;
-mod shared;
+mod produtos;   // Módulo de produtos
+mod vendas;     // Módulo de vendas
+mod categorias; // Módulo de categorias
+mod shared;     // Módulo shared
+mod usuarios;   // Módulo de usuários
 
 // Estado compartilhado que contém a conexão com o banco de dados.
 // Esta struct permanece aqui, pois o pool de conexão é global para a aplicação
@@ -78,6 +81,10 @@ async fn main() -> std::io::Result<()> {
             .service(categorias::categoria_router::buscar_categoria_por_id)
             .service(categorias::categoria_router::atualizar_categoria)
             .service(categorias::categoria_router::deletar_categoria)
+            
+            // Módulo de Usuários (Novas Rotas)
+            .service(usuarios::usuario_router::cadastrar_usuario)
+            .service(usuarios::usuario_router::login_usuario)
     })
     // Vincula o servidor ao endereço IP e porta. O '?' propaga erros.
     .bind("127.0.0.1:8080")?
